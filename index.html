@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zenith Torrent Library</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #0b0e11; color: #ffffff; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        .header { text-align: center; padding: 10px 0; border-bottom: 2px solid #1e2329; margin-bottom: 20px; }
+        .header h2 { color: #f0b90b; margin: 5px 0; font-size: 22px; }
+        .header p { color: #848e9c; font-size: 13px; margin: 0; }
+        
+        /* সার্চ বক্স ডিজাইন */
+        .search-container { position: sticky; top: 10px; z-index: 100; margin-bottom: 20px; }
+        .search-box { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #474d57; background: #1e2329; color: white; font-size: 16px; box-sizing: border-box; outline: none; transition: border 0.3s; }
+        .search-box:focus { border: 1px solid #f0b90b; }
+
+        /* আইটেম কার্ড ডিজাইন */
+        #results { margin-top: 10px; }
+        .item-card { background: #1e2329; border-radius: 14px; padding: 16px; margin-bottom: 15px; border-left: 4px solid #f0b90b; box-shadow: 0 4px 6px rgba(0,0,0,0.2); animation: fadeIn 0.5s ease; }
+        .item-title { font-size: 15px; font-weight: 600; line-height: 1.4; display: block; margin-bottom: 10px; color: #eaecef; }
+        .item-meta { display: flex; justify-content: space-between; align-items: center; }
+        .category { font-size: 11px; background: #2b3139; color: #f0b90b; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        /* ডাউনলোড বাটন */
+        .btn-download { background: linear-gradient(90deg, #f0b90b, #fabc2e); color: #000000; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; transition: transform 0.2s; }
+        .btn-download:active { transform: scale(0.95); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { text-align: center; color: #848e9c; margin-top: 50px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>🚀 Zenith Library</h2>
+        <p>Your High-Speed Torrent Engine</p>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-box" placeholder="মুভি, সফটওয়্যার বা স্টাডি ফাইল খুঁজুন..." oninput="searchLibrary()">
+    </div>
+
+    <div id="results">
+        <p class="loading">লাইব্রেরি থেকে কিছু খুঁজুন...</p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // অ্যাপটিকে ফুল স্ক্রিন করবে
+        tg.ready();
+
+        async function searchLibrary() {
+            const query = document.getElementById('searchInput').value;
+            const resultsDiv = document.getElementById('results');
+
+            if(query.length < 2) {
+                resultsDiv.innerHTML = '<p class="loading">আরও কিছু টাইপ করুন...</p>';
+                return;
+            }
+
+            try {
+                // আপনার Termux এর লোকাল API (সার্ভার অন থাকতে হবে)
+                // আপনার ফোনের IP চেক করতে Termux এ 'ifconfig' লিখে wlan0 এর IP টি এখানে বসাতে পারেন।
+                const response = await fetch(`http://localhost:5000/search?q=${query}`);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p class="loading">কিছু পাওয়া যায়নি! 🔍</p>';
+                    return;
+                }
+
+                let html = '';
+                data.forEach(item => {
+                    html += `
+                        <div class="item-card">
+                            <span class="item-title">${item.title}</span>
+                            <div class="item-meta">
+                                <span class="category">⚡ Trending</span>
+                                <button class="btn-download" onclick="sendToBot('${item.magnet}')">GET FILE</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+            } catch (e) {
+                resultsDiv.innerHTML = '<p class="loading" style="color:#ff6b6b;">সার্ভার কানেক্ট হচ্ছে না! (server.py চালু আছে কি?)</p>';
+            }
+        }
+
+        function sendToBot(magnet) {
+            // টেলিগ্রাম বটের কাছে ম্যাগনেট লিঙ্কটি পাঠিয়ে দিবে
+            tg.sendData(magnet);
+            tg.close(); // কাজ শেষে মিনি অ্যাপ বন্ধ হবে
+        }
+    </script>
+</body>
+</html>
